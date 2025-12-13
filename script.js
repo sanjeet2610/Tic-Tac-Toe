@@ -101,12 +101,15 @@ const GameController = function (playerOne = "first", playerTwo = "second") {
 };
 
 function screenController() {
-  const game = GameController("Player One", "Player Two");
+  const playerOne = document.querySelector("#first-person");
+  const playerTwo = document.querySelector("#second-person");
+  if (!playerOne.value || !playerTwo.value) return;
+  const game = GameController(playerOne.value, playerTwo.value);
 
   const container = document.querySelector(".container");
   const playerTurnDiv = document.querySelector(".turn");
   const boardDiv = document.querySelector(".board");
-  const result = document.createElement("div");
+  const result = document.querySelector(".result");
 
   const UpdateScreen = () => {
     boardDiv.textContent = "";
@@ -125,8 +128,8 @@ function screenController() {
       else if (text == 2) mark = "O";
       cellButton.textContent = mark;
       cellButton.style.backgroundColor = "blue";
-      cellButton.style.height = "20px";
-      cellButton.style.width = "20px";
+      cellButton.style.height = "100%";
+      cellButton.style.width = "100%";
       boardDiv.appendChild(cellButton);
     });
   };
@@ -135,18 +138,18 @@ function screenController() {
     if (!e.target.dataset.index) return;
     const status = game.playRound(e.target.dataset.index);
     UpdateScreen();
-    result.classList.add("result");
-    result.textContent = status;
-    container.appendChild(result);
+    if (!result.textContent) result.textContent = status;
   });
 
   const reset = document.querySelector(".reset");
   reset.addEventListener("click", () => {
     game.resetGame();
     UpdateScreen();
+    playerTurnDiv.textContent = "";
     result.textContent = "";
   });
   UpdateScreen();
 }
 
-screenController();
+const start = document.querySelector(".start");
+start.addEventListener("click", screenController);
