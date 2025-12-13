@@ -11,36 +11,7 @@ const Gameboard = (function () {
     return true;
   };
 
-  const printBoard = () => {
-    const boardWithCellValues = board.map((cell) => cell.getMark());
-    console.log(boardWithCellValues);
-  };
-
-  const checkwinning = () => {
-    const arr = board.map((cell) => cell.getMark());
-    if (arr[0] != 0 && arr[0] == arr[1] && arr[1] == arr[2]) return true;
-    if (arr[3] != 0 && arr[3] == arr[4] && arr[4] == arr[5]) return true;
-    if (arr[6] != 0 && arr[6] == arr[7] && arr[7] == arr[8]) return true;
-
-    if (arr[0] != 0 && arr[0] == arr[3] && arr[3] == arr[6]) return true;
-    if (arr[1] != 0 && arr[1] == arr[4] && arr[4] == arr[7]) return true;
-    if (arr[2] != 0 && arr[2] == arr[5] && arr[5] == arr[8]) return true;
-
-    if (arr[0] != 0 && arr[0] == arr[4] && arr[4] == arr[8]) return true;
-    if (arr[2] != 0 && arr[2] == arr[4] && arr[4] == arr[6]) return true;
-
-    return false;
-  };
-
-  const isCellFull = () => {
-    const allCellVal = board.map((cell) => cell.getMark());
-    for (let i = 0; i < 9; i++) {
-      if (allCellVal[i] == 0) return false;
-    }
-    return true;
-  };
-
-  return { getBoard, markCell, printBoard, checkwinning, isCellFull };
+  return { getBoard, markCell };
 })();
 
 function cell() {
@@ -69,41 +40,113 @@ const GameController = function (playerOne = "first", playerTwo = "second") {
 
   const getActivePlayer = () => activePlayer;
 
-  const printNewRound = () => {
-    board.printBoard();
-    console.log(`${activePlayer.name}'s Turn`);
-  };
-
   let isGameOver = false;
 
   const playRound = (index) => {
     if (isGameOver) return;
-    console.log(`dropping ${activePlayer.name}'s mark on index ${index}...`);
     const marked = board.markCell(index, activePlayer.mark);
     if (!marked) return;
-    const isWon = board.checkwinning();
+    const isWon = checkwinning();
     if (isWon) {
       isGameOver = true;
-      console.log(`Game won by ${activePlayer.name}`);
-      return;
+      return `Game won by ${activePlayer.name}`;
     }
-    const isDraw = board.isCellFull();
+    const isDraw = isCellFull();
     if (isDraw) {
       isGameOver = true;
-      console.log(`Game is draw`);
-      return;
+      return "Game is draw";
     }
     switchPlayerTurn();
-    printNewRound();
+    return "";
   };
-  printNewRound();
 
   const resetGame = () => {
     for (let i = 0; i < 9; i++) {
-      board[i].setMark(0);
+      board.getBoard()[i].setMark(0);
     }
     isGameOver = false;
     activePlayer = player[0];
   };
-  return { playRound, getActivePlayer };
+
+  const checkwinning = () => {
+    const arr = board.getBoard().map((cell) => cell.getMark());
+    if (arr[0] != 0 && arr[0] == arr[1] && arr[1] == arr[2]) return true;
+    if (arr[3] != 0 && arr[3] == arr[4] && arr[4] == arr[5]) return true;
+    if (arr[6] != 0 && arr[6] == arr[7] && arr[7] == arr[8]) return true;
+
+    if (arr[0] != 0 && arr[0] == arr[3] && arr[3] == arr[6]) return true;
+    if (arr[1] != 0 && arr[1] == arr[4] && arr[4] == arr[7]) return true;
+    if (arr[2] != 0 && arr[2] == arr[5] && arr[5] == arr[8]) return true;
+
+    if (arr[0] != 0 && arr[0] == arr[4] && arr[4] == arr[8]) return true;
+    if (arr[2] != 0 && arr[2] == arr[4] && arr[4] == arr[6]) return true;
+
+    return false;
+  };
+
+  const isCellFull = () => {
+    const allCellVal = board.getBoard().map((cell) => cell.getMark());
+    for (let i = 0; i < 9; i++) {
+      if (allCellVal[i] == 0) return false;
+    }
+    return true;
+  };
+
+  return {
+    playRound,
+    getActivePlayer,
+    board: board.getBoard(),
+    resetGame,
+  };
 };
+
+function screenController() {
+  const game = GameController("Player One", "Player Two");
+
+  const container = document.querySelector(".container");
+  const playerTurnDiv = document.querySelector(".turn");
+  const boardDiv = document.querySelector(".board");
+  const result = document.createElement("div");
+
+  const UpdateScreen = () => {
+    boardDiv.textContent = "";
+
+    const board = game.board;
+    const activePlayer = game.getActivePlayer();
+    playerTurnDiv.textContent = `${activePlayer.name}'s turn ...`;
+
+    board.forEach((cell, index) => {
+      const cellButton = document.createElement("button");
+      cellButton.classList.add("cell");
+      cellButton.dataset.index = index;
+      const text = cell.getMark();
+      let mark = "";
+      if (text == 1) mark = "X";
+      else if (text == 2) mark = "O";
+      cellButton.textContent = mark;
+      cellButton.style.backgroundColor = "blue";
+      cellButton.style.height = "20px";
+      cellButton.style.width = "20px";
+      boardDiv.appendChild(cellButton);
+    });
+  };
+
+  boardDiv.addEventListener("click", (e) => {
+    if (!e.target.dataset.index) return;
+    const status = game.playRound(e.target.dataset.index);
+    UpdateScreen();
+    result.classList.add("result");
+    result.textContent = status;
+    container.appendChild(result);
+  });
+
+  const reset = document.querySelector(".reset");
+  reset.addEventListener("click", () => {
+    game.resetGame();
+    UpdateScreen();
+    result.textContent = "";
+  });
+  UpdateScreen();
+}
+
+screenController();
